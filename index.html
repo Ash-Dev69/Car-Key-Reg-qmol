@@ -465,7 +465,7 @@
         <div class="controls-main-row">
           <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="regSearch" placeholder="Search by CAR Reg Number..." oninput="renderTable()">
+            <input type="text" id="regSearch" placeholder="Search by CAR Reg Number AB26 XYZ" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().replace(/^(.{4})(.)/, '$1 $2').slice(0, 8); renderTable();" style="text-transform: uppercase;">
           </div>
 
           <div class="actions-group">
