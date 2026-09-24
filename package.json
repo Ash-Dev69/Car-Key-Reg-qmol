@@ -1,0 +1,12 @@
+{
+  "name": "car-key-registration-management",
+  "version": "1.0.0",
+  "description": "Embassy of the State of Qatar Medical Office London - Car Key Registry",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
