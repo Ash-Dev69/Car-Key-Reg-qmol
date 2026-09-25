@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Key Registration Management</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- PDFMake Libraries for Direct Pure JavaScript PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  
+  <!-- SheetJS Library for Excel Import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <style>
+    :root {
+      --bg-outer: #ffffff;
+      --app-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --qatar-maroon: #8A1538;
+      
+      --fob-out-bg: #fef08a;
+      --fob-out-text: #854d0e;
+      --fob-custody-bg: #dcfce7;
+      --fob-custody-text: #166534;
+      --fob-unknown-bg: #fee2e2;
+      --fob-unknown-text: #991b1b;
+      --fob-return-bg: #e2e8f0;
+      --fob-return-text: #475569;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-outer);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 4px 10px;
+    }
+
+    .tablet-device {
+      width: 100%;
+      max-width: 1650px;
+      background: #ffffff;
+      border: 10px solid #334155;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tablet-camera-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 10px;
+      background: #334155;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .tablet-camera-lens { width: 5px; height: 5px; background: #0f172a; border-radius: 50%; }
+
+    .app-container {
+      display: flex;
+      min-height: 860px;
+      background: var(--app-bg);
+      padding-top: 4px;
+    }
+
+    .sidebar {
+      width: 50px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 16px;
+    }
+    .sidebar .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .sidebar-icon {
+      font-size: 15px;
+      color: #64748b;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .sidebar-icon.active {
+      color: var(--primary);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px;
+      overflow: hidden;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 4px;
+      width: 100%;
+    }
+    
+    .top-header h1 {
+      font-family: "Californian FB", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.2px;
+    }
+
+    .branding-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 40px;
+    }
+    
+    .qatar-logo {
+      height: 58px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .brand-divider {
+      width: 2px;
+      height: 52px;
+      background-color: var(--qatar-maroon);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: var(--qatar-maroon);
+      font-family: "Californian FB", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+      line-height: 1.15;
+    }
+    .brand-text .line1 { font-size: 15px; font-weight: 700; letter-spacing: 0.2px; white-space: nowrap; }
+    .brand-text .line2 { font-size: 13px; font-weight: 700; letter-spacing: 0.3px; white-space: nowrap; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .stat-title { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .stat-footer { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--text-main); }
+    .stat-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+    .badge-out { background: var(--fob-out-bg); color: var(--fob-out-text); }
+    .badge-custody { background: var(--fob-custody-bg); color: var(--fob-custody-text); }
+    .badge-unknown { background: var(--fob-unknown-bg); color: var(--fob-unknown-text); }
+    .badge-return { background: var(--fob-return-bg); color: var(--fob-return-text); }
+    .badge-neutral { color: var(--text-muted); font-weight: 500; font-size: 10px; }
+
+    .filter-panel {
+      background: var(--card-bg);
+      padding: 10px 14px 6px 14px;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid var(--border-light);
+      border-bottom: none;
+    }
+
+    .controls-main-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-box { position: relative; flex: 1; max-width: 260px; }
+    .search-box i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 11px; }
+    .search-box input { width: 100%; padding: 6px 10px 6px 28px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; outline: none; }
+
+    .actions-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-import { color: #0284c7; background: #f0f9ff; border-color: #bae6fd; }
+    .btn-excel { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
+    .btn-csv { color: #475569; background: #f8fafc; border-color: #e2e8f0; }
+    .btn-pdf { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+
+    @keyframes slowZoomPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .btn-register-sky {
+      background-color: #7dd3fc;
+      color: #0f172a;
+      border: 1px solid #38bdf8;
+      font-weight: 700;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      animation: slowZoomPulse 2.5s infinite ease-in-out;
+      will-change: transform;
+    }
+    .btn-register-sky:hover { animation-play-state: paused; background-color: #38bdf8; }
+
+    .reset-row { margin-top: 4px; margin-bottom: 2px; }
+    .reset-link { font-size: 10px; color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+    .reset-link:hover { text-decoration: underline; }
+
+    .table-wrapper {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 0 0 8px 8px;
+      margin-top: 2px;
+      width: 100%;
+      max-height: 610px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-scroll-container {
+      overflow-y: auto;
+      overflow-x: auto;
+      flex: 1;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+    
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #f8fafc;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    
+    td { padding: 6px 10px; border-bottom: 1px solid var(--border-light); color: #334155; vertical-align: middle; }
+
+    .si-col { width: 50px; text-align: center; font-weight: 600; color: #64748b; }
+    th.si-col { text-align: center; }
+    .chk-col { width: 30px; text-align: center; }
+
+    .plate-container { display: flex; align-items: center; gap: 4px; }
+    .plate-display { font-weight: 700; color: #2563eb; letter-spacing: 0.3px; }
+    .btn-edit-pen { color: #64748b; cursor: pointer; font-size: 10px; padding: 2px; border-radius: 3px; transition: all 0.2s; }
+    .btn-edit-pen:hover { color: var(--primary); background: #eff6ff; }
+
+    .table-input { width: 100%; min-width: 80px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); font-size: 10px; outline: none; text-transform: uppercase; }
+    .table-input.normal-case { text-transform: none; }
+    .num-keys-input { width: 60px; text-align: center; }
+    .input-locked-out { background: var(--fob-out-bg); color: var(--fob-out-text); font-weight: 700; border-color: #fef08a; }
+    .input-locked-custody { background: var(--fob-custody-bg); color: var(--fob-custody-text); font-weight: 700; border-color: #bbf7d0; }
+
+    .date-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .date-locked-out { background: var(--fob-out-bg); color: var(--fob-out-text); }
+    .date-locked-custody { background: var(--fob-custody-bg); color: var(--fob-custody-text); }
+
+    .status-select { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; border: 1px solid var(--border); cursor: pointer; }
+    .select-out { background: var(--fob-out-bg); color: var(--fob-out-text); }
+    .select-custody { background: var(--fob-custody-bg); color: var(--fob-custody-text); }
+    .select-unknown { background: var(--fob-unknown-bg); color: var(--fob-unknown-text); }
+    .select-return { background: var(--fob-return-bg); color: var(--fob-return-text); }
+
+    .action-cell-content { display: flex; align-items: center; gap: 6px; }
+    .active-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #15803d; }
+    .green-circle { width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; }
+    .inactive-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: #64748b; }
+    .gray-circle { width: 8px; height: 8px; background-color: #94a3b8; border-radius: 50%; display: inline-block; }
+    
+    .action-btns { display: flex; gap: 8px; align-items: center; }
+    .action-btns i { cursor: pointer; font-size: 12px; }
+    .action-btns .btn-history { color: var(--primary); }
+    .action-btns .btn-delete { color: #ef4444; }
+
+    .table-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border-light);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .footer-left-group { display: flex; align-items: center; gap: 10px; }
+
+    .rows-per-page-select {
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #f8fafc;
+      color: var(--text-main);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .pagination { display: flex; gap: 4px; }
+    .page-btn { padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: #fff; font-size: 10px; cursor: pointer; }
+    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+    .modal { background: #fff; border-radius: 10px; padding: 20px; width: 480px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+    .modal h3 { font-family: "Californian FB", "Palatino Linotype", Georgia, serif; font-size: 16px; margin-bottom: 12px; color: var(--text-main); }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 10px; font-weight: 600; margin-bottom: 3px; color: var(--text-muted); }
+    .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; }
+    .form-row-2 { display: flex; gap: 10px; }
+    .form-row-2 .form-group { flex: 1; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 16px; }
+
+    /* Audit Log History List UI */
+    .history-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 8px;
+      background: #f8fafc;
+    }
+    .history-item {
+      padding: 8px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 11px;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-item-header { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+    .history-item-sub { color: var(--text-muted); font-size: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="tablet-device" id="exportDashboard">
+  <div class="tablet-camera-notch"><div class="tablet-camera-lens"></div></div>
+
+  <div class="app-container">
+    <div class="sidebar">
+      <div class="user-avatar"><i class="fa-regular fa-user"></i></div>
+      <i class="fa-solid fa-house sidebar-icon active"></i>
+      <i class="fa-solid fa-clock-rotate-left sidebar-icon"></i>
+    </div>
+
+    <div class="main-content">
+      <div class="top-header">
+        <h1>Car Key Registration Management</h1>
+
+        <div class="branding-right">
+          <img src="Qatar official logo.png" alt="Qatar Official Logo" class="qatar-logo" onerror="this.style.display='none'">
+          <div class="brand-divider"></div>
+          <div class="brand-text">
+            <span class="line1">Embassy of the State of Qatar</span>
+            <span class="line2">Medical Office-London</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-title">Total Keys Registered</span>
+          <div class="stat-footer">
+            <span class="stat-value" id="statTotal">0</span>
+            <span class="stat-badge badge-neutral">All Records</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">FOB-OUT</span>
+          <div class="stat-footer">
+            <span class="stat-value" id="statOut" style="color: #854d0e;">0</span>
+            <span class="stat-badge badge-out" id="pctOut">0%</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">FOB- in custody</span>
+          <div class="stat-footer">
+            <span class="stat-value" id="statCustody" style="color: #166534;">0</span>
+            <span class="stat-badge badge-custody" id="pctCustody">0%</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Unknown Key</span>
+          <div class="stat-footer">
+            <span class="stat-value" id="statUnknown" style="color: #991b1b;">0</span>
+            <span class="stat-badge badge-unknown" id="pctUnknown">0%</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">Return</span>
+          <div class="stat-footer">
+            <span class="stat-value" id="statReturn" style="color: #475569;">0</span>
+            <span class="stat-badge badge-return" id="pctReturn">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-panel">
+        <div class="controls-main-row">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="regSearch" placeholder="Search by CAR Reg Number AB26 XYZ" oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().replace(/^(.{4})(.)/, '$1 $2').slice(0, 8); renderTable();" style="text-transform: uppercase;">
+          </div>
+
+          <div class="actions-group">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv, .json" style="display: none;" onchange="importExcelFile(event)">
+            <button class="btn btn-csv" onclick="downloadTemplate()"><i class="fa-solid fa-file-arrow-down"></i> Download Template</button>
+            <button class="btn btn-import" onclick="document.getElementById('excelFileInput').click()"><i class="fa-solid fa-file-import"></i> Import Data / Excel</button>
+            <button class="btn btn-excel" onclick="exportToExcel()"><i class="fa-regular fa-file-excel"></i> Export to Excel</button>
+            <button class="btn btn-csv" onclick="exportToCSV()"><i class="fa-solid fa-file-csv"></i> Export to CSV</button>
+            <button class="btn btn-pdf" id="pdfBtn" onclick="exportToPDF()"><i class="fa-regular fa-file-pdf"></i> Export to PDF</button>
+            <button class="btn" style="color:#ef4444; background:#fef2f2; border-color:#fecaca;" onclick="bulkDeleteSelected()"><i class="fa-solid fa-trash-can"></i> Delete Selected</button>
+            <button class="btn btn-register-sky" onclick="openModal()"><i class="fa-solid fa-plus"></i> Register New Key</button>
+          </div>
+        </div>
+
+        <div class="reset-row">
+          <a class="reset-link" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</a>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-scroll-container">
+          <table id="registryTable">
+            <thead>
+              <tr>
+                <th class="chk-col"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)" title="Select All"></th>
+                <th class="si-col">SI No.</th>
+                <th>Key ID</th>
+                <th>Car Reg Number</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>No. of Keys</th>
+                <th>Key Taken By</th>
+                <th>Taken Date</th>
+                <th>Reason of Withdrawal</th>
+                <th>Key Returned By</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th class="action-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Dynamic Data -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <div class="footer-left-group">
+            <span id="recordCount">Showing 0 of 0 registered keys</span>
+            <label style="font-size: 10px; font-weight: 600;">Rows per page:
+              <select id="rowsPerPageSelect" class="rows-per-page-select" onchange="changeRowsPerPage(this.value)">
+                <option value="15" selected>15</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+          </div>
+          <div class="pagination" id="paginationControls">
+            <!-- Dynamic Pagination -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h3>Register New Car Key</h3>
+      <div class="form-group">
+        <label>Car Reg Number (e.g. AB26 XYZ)</label>
+        <input type="text" id="modalPlate" placeholder="AB26 XYZ" oninput="formatUKPlateInput(this)">
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Make</label>
+          <select id="modalMakeSelect" onchange="handleModalMakeChange(this.value)">
+            <option value="MERCEDES">MERCEDES</option>
+            <option value="FORD">FORD</option>
+            <option value="VOLKSWAGEN">VOLKSWAGEN</option>
+            <option value="BMW" selected>BMW</option>
+            <option value="OTHER">OTHER</option>
+          </select>
+          <input type="text" id="modalMakeCustom" placeholder="Type Make Name..." style="display:none; margin-top:4px; text-transform:uppercase;" oninput="this.value = this.value.toUpperCase()">
+        </div>
+        <div class="form-group">
+          <label>Model</label>
+          <input type="text" id="modalModel" placeholder="e.g. X5" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>No. of Keys</label>
+        <input type="number" id="modalNumKeys" placeholder="e.g. 2" min="1" value="1">
+      </div>
+      <div class="form-group">
+        <label>Key Taken By</label>
+        <input type="text" id="modalTakenBy" class="normal-case" placeholder="e.g. Michael Davis">
+      </div>
+      <div class="form-group">
+        <label>Reason of Withdrawal</label>
+        <input type="text" id="modalReason" class="normal-case" placeholder="e.g. Maintenance Service">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="modalStatus">
+          <option value="FOB-OUT">FOB-OUT</option>
+          <option value="FOB- in custody">FOB- in custody</option>
+          <option value="Unknown Key">Unknown Key</option>
+          <option value="Return">Return</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-register-sky" onclick="saveNewKey()">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Update Modal for Status Change -->
+  <div class="modal-overlay" id="statusKeyUpdateModalOverlay">
+    <div class="modal">
+      <h3>Update Number of Keys</h3>
+      <div class="form-group">
+        <label>Enter new number of keys for status change:</label>
+        <input type="number" id="statusModalNumKeys" min="1" value="1">
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="cancelStatusKeyUpdate()">Cancel</button>
+        <button class="btn btn-register-sky" onclick="confirmStatusKeyUpdate()">Update & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return Confirmation Modal -->
+  <div class="modal-overlay" id="returnConfirmModalOverlay">
+    <div class="modal" style="text-align: center; padding: 24px;">
+      <div style="font-size: 32px; color: #eab308; margin-bottom: 10px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 style="font-size: 15px; margin-bottom: 16px;">Are you sure to proceed as return ?</h3>
+      <div class="modal-actions" style="justify-content: center;">
+        <button class="btn" onclick="cancelReturnAction()">No</button>
+        <button class="btn btn-register-sky" onclick="confirmReturnAction()">Yes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit History Modal -->
+  <div class="modal-overlay" id="historyModalOverlay">
+    <div class="modal">
+      <h3 id="historyTitle">Key Handover Audit Trail</h3>
+      <div class="history-list" id="historyList">
+        <!-- Audit log items rendered dynamically -->
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let rowsPerPage = 15;
+  let currentPage = 1;
+  let nextKeyNumber = 1;
+  let pendingReturnKeyId = null;
+  let pendingReturnSelectElement = null;
+  let pendingStatusKeyId = null;
+  let pendingStatusNewValue = null;
+  let pendingStatusSelectElement = null;
+
+  let keyRegistryData = [];
+
+  function loadStoredData() {
+    fetch('/api/keys')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.registry) {
+          keyRegistryData = data.registry;
+          nextKeyNumber = data.nextNum || 1;
+        }
+        sanitizeData();
+        renderTable();
+      })
+      .catch(err => {
+        console.error("Failed to load data from server, falling back to local storage.", err);
+        const stored = localStorage.getItem("QMOL_KEY_REGISTRY");
+        if (stored) {
+          try { keyRegistryData = JSON.parse(stored); } catch (e) { keyRegistryData = []; }
+        }
+        const storedNum = localStorage.getItem("QMOL_NEXT_NUMBER");
+        if (storedNum) { nextKeyNumber = parseInt(storedNum, 10); }
+        sanitizeData();
+        renderTable();
+      });
+  }
+
+  function saveStoredData() {
+    localStorage.setItem("QMOL_KEY_REGISTRY", JSON.stringify(keyRegistryData));
+    localStorage.setItem("QMOL_NEXT_NUMBER", nextKeyNumber.toString());
+
+    fetch('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registry: keyRegistryData, nextNum: nextKeyNumber })
+    }).catch(err => {
+      console.error("Failed to sync changes to server database.", err);
+    });
+  }
+
+  function sanitizeData() {
+    keyRegistryData.forEach(item => {
+      if (!item.history) item.history = [];
+      if (item.make === undefined) item.make = '';
+      if (item.model === undefined) item.model = '';
+      if (item.numKeys === undefined) item.numKeys = '1';
+      if (item.reason === undefined) item.reason = '';
+      if (item.actionStatus === undefined) item.actionStatus = 'active';
+    });
+  }
+
+  function startNetworkPollingSync() {
+    setInterval(() => {
+      fetch('/api/keys')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.registry && JSON.stringify(data.registry) !== JSON.stringify(keyRegistryData)) {
+            keyRegistryData = data.registry;
+            nextKeyNumber = data.nextNum || nextKeyNumber;
+            sanitizeData();
+            renderTable();
+          }
+        })
+        .catch(err => {});
+    }, 5000);
+  }
+
+  function generateQMOLId() {
+    const formattedId = `QMOL-00${nextKeyNumber}`;
+    nextKeyNumber++;
+    saveStoredData();
+    return formattedId;
+  }
+
+  function formatPlateString(val) {
+    if (!val) return '';
+    let cleaned = val.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return cleaned.length > 4 ? cleaned.slice(0, 4) + ' ' + cleaned.slice(4, 7) : cleaned;
+  }
+
+  function formatUKPlateInput(inputEl) { inputEl.value = formatPlateString(inputEl.value); }
+  function getCurrentFormattedDate() { return new Date().toISOString().slice(0, 10) + ' ' + new Date().toTimeString().slice(0, 5); }
+
+  function changeRowsPerPage(val) {
+    rowsPerPage = parseInt(val, 10);
+    currentPage = 1;
+    renderTable();
+  }
+
+  function handleModalMakeChange(val) {
+    const customInput = document.getElementById("modalMakeCustom");
+    if (val === "OTHER") {
+      customInput.style.display = "block";
+      customInput.focus();
+    } else {
+      customInput.style.display = "none";
+      customInput.value = "";
+    }
+  }
+
+  function renderTable() {
+    const searchVal = document.getElementById("regSearch").value.toUpperCase();
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    const filtered = keyRegistryData.filter(item => (item.plate || '').toUpperCase().includes(searchVal));
+
+    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    paginatedItems.forEach((item, index) => {
+      let takenInput = '', returnedInput = '', takenDateHtml = '', returnDateHtml = '', selectClass = '';
+      const globalIndex = startIndex + index + 1;
+
+      const standardMakes = ["MERCEDES", "FORD", "VOLKSWAGEN", "BMW"];
+      let makeCurrentVal = (item.make || 'BMW').toUpperCase();
+      let isStandardMake = standardMakes.includes(makeCurrentVal);
+      
+      let makeCellHtml = `
+        <select class="table-input" onchange="handleTableMakeChange('${item.id}', this.value)">
+          <option value="MERCEDES" ${makeCurrentVal === 'MERCEDES' ? 'selected' : ''}>MERCEDES</option>
+          <option value="FORD" ${makeCurrentVal === 'FORD' ? 'selected' : ''}>FORD</option>
+          <option value="VOLKSWAGEN" ${makeCurrentVal === 'VOLKSWAGEN' ? 'selected' : ''}>VOLKSWAGEN</option>
+          <option value="BMW" ${makeCurrentVal === 'BMW' ? 'selected' : ''}>BMW</option>
+          <option value="OTHER" ${!isStandardMake ? 'selected' : ''}>OTHER</option>
+        </select>
+        <input type="text" class="table-input" style="margin-top:2px; ${!isStandardMake ? '' : 'display:none;'}" id="tableMakeCustom_${item.id}" value="${!isStandardMake ? makeCurrentVal : ''}" placeholder="ENTER MAKE" onchange="updateField('${item.id}', 'make', this.value.toUpperCase())">
+      `;
+
+      const modelInput = `<input type="text" class="table-input" value="${item.model || ''}" onchange="updateField('${item.id}', 'model', this.value.toUpperCase())" placeholder="MODEL">`;
+      const numKeysInput = `<input type="number" class="table-input num-keys-input" value="${item.numKeys || '1'}" min="1" onchange="updateField('${item.id}', 'numKeys', this.value)">`;
+
+      if (item.status === 'FOB-OUT') {
+        selectClass = 'select-out';
+        takenInput = `<input type="text" class="table-input normal-case" value="${item.takenBy || ''}" disabled readonly>`;
+        returnedInput = `<input type="text" class="table-input normal-case" value="${item.returnedBy || ''}" onchange="updateName('${item.id}', 'returnedBy', this.value)" placeholder="Enter Name">`;
+        takenDateHtml = `<span class="date-tag date-locked-out" style="cursor:pointer;" onclick="editTakenDate('${item.id}')" title="Click to edit Taken Date"><i class="fa-solid fa-lock"></i> ${item.takenDate || ''} <i class="fa-solid fa-pen" style="font-size:8px; margin-left:3px;"></i></span>`;
+        returnDateHtml = `<span class="date-tag">Pending Return</span>`;
+      } else if (item.status === 'FOB- in custody') {
+        selectClass = 'select-custody';
+        takenInput = `<input type="text" class="table-input normal-case" value="${item.takenBy || ''}" onchange="updateName('${item.id}', 'takenBy', this.value)" placeholder="Enter Name">`;
+        returnedInput = `<input type="text" class="table-input normal-case input-locked-custody" value="${item.returnedBy || ''}" disabled readonly>`;
+        takenDateHtml = `<span class="date-tag" style="cursor:pointer;" onclick="editTakenDate('${item.id}')" title="Click to edit Taken Date">${item.takenDate || ''} <i class="fa-solid fa-pen" style="font-size:8px; margin-left:3px;"></i></span>`;
+        returnDateHtml = `<span class="date-tag date-locked-custody"><i class="fa-solid fa-lock"></i> ${item.returnDate || ''}</span>`;
+      } else if (item.status === 'Return') {
+        selectClass = 'select-return';
+        takenInput = `<input type="text" class="table-input normal-case" value="${item.takenBy || ''}" disabled readonly>`;
+        returnedInput = `<input type="text" class="table-input normal-case" value="${item.returnedBy || ''}" disabled readonly>`;
+        takenDateHtml = `<span class="date-tag" style="cursor:pointer;" onclick="editTakenDate('${item.id}')" title="Click to edit Taken Date">${item.takenDate || ''} <i class="fa-solid fa-pen" style="font-size:8px; margin-left:3px;"></i></span>`;
+        returnDateHtml = `<span class="date-tag">${item.returnDate || ''}</span>`;
+      } else {
+        selectClass = 'select-unknown';
+        takenInput = `<input type="text" class="table-input normal-case" value="${item.takenBy || ''}" onchange="updateName('${item.id}', 'takenBy', this.value)" placeholder="Enter Name">`;
+        returnedInput = `<input type="text" class="table-input normal-case" value="${item.returnedBy || ''}" onchange="updateName('${item.id}', 'returnedBy', this.value)" placeholder="Enter Name">`;
+        takenDateHtml = `<span style="cursor:pointer;" onclick="editTakenDate('${item.id}')" title="Click to edit Taken Date">${item.takenDate || '--'} <i class="fa-solid fa-pen" style="font-size:8px; margin-left:3px;"></i></span>`; 
+        returnDateHtml = `--`;
+      }
+
+      const reasonInput = `<input type="text" class="table-input normal-case" value="${item.reason || ''}" onchange="updateField('${item.id}', 'reason', this.value)" placeholder="Enter Reason">`;
+
+      let actionHtml = '';
+      if (item.actionStatus === 'inactive') {
+        actionHtml = `
+          <div class="action-cell-content">
+            <span class="inactive-indicator"><span class="gray-circle"></span> Inactive</span>
+            <i class="fa-solid fa-pen btn-edit-pen" onclick="promptChangeActionStatus('${item.id}')" title="Change Action Status"></i>
+          </div>
+        `;
+      } else {
+        actionHtml = `
+          <div class="action-cell-content">
+            <span class="active-indicator"><span class="green-circle"></span> Active</span>
+            <i class="fa-solid fa-pen btn-edit-pen" onclick="promptChangeActionStatus('${item.id}')" title="Change Action Status"></i>
+          </div>
+        `;
+      }
+
+      const row = document.createElement("tr");
+      if (item.actionStatus === 'inactive') {
+        row.style.backgroundColor = "#94a3b8";
+        row.style.color = "#ffffff";
+      }
+
+      row.innerHTML = `
+        <td class="chk-col"><input type="checkbox" class="row-checkbox" data-id="${item.id}" onclick="updateSelectAllState()"></td>
+        <td class="si-col">${globalIndex}</td>
+        <td>
+          <div class="plate-container">
+            <strong>${item.id || ''}</strong>
+            <i class="fa-solid fa-pen btn-edit-pen" onclick="editKeyId('${item.id}')" title="Edit Key ID (Passport Required)"></i>
+          </div>
+        </td>
+        <td>
+          <div class="plate-container">
+            <span class="plate-display" ${item.actionStatus === 'inactive' ? 'style="color:#ffffff;"' : ''}>${item.plate || ''}</span>
+            <i class="fa-solid fa-pen btn-edit-pen" onclick="editPlateNumber('${item.id}')" title="Edit Car Reg Number"></i>
+          </div>
+        </td>
+        <td>${makeCellHtml}</td>
+        <td>${modelInput}</td>
+        <td>${numKeysInput}</td>
+        <td>${takenInput}</td>
+        <td>${takenDateHtml}</td>
+        <td>${reasonInput}</td>
+        <td>${returnedInput}</td>
+        <td>${returnDateHtml}</td>
+        <td>
+          <select class="status-select ${selectClass}" onchange="handleStatusSelectChange('${item.id}', this)">
+            <option value="FOB-OUT" ${item.status === 'FOB-OUT' ? 'selected' : ''}>FOB-OUT</option>
+            <option value="FOB- in custody" ${item.status === 'FOB- in custody' ? 'selected' : ''}>FOB- in custody</option>
+            <option value="Unknown Key" ${item.status === 'Unknown Key' ? 'selected' : ''}>Unknown Key</option>
+            <option value="Return" ${item.status === 'Return' ? 'selected' : ''}>Return</option>
+          </select>
+        </td>
+        <td class="action-col">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            ${actionHtml}
+            <div class="action-btns">
+              <i class="fa-solid fa-clock-rotate-left btn-history" onclick="viewHistory('${item.id}')" title="View Handover History"></i>
+              <i class="fa-regular fa-trash-can btn-delete" onclick="deleteKey('${item.id}')" title="Delete"></i>
+            </div>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    const displayedCount = Math.min(endIndex, filtered.length);
+    document.getElementById("recordCount").innerText = `Showing ${filtered.length > 0 ? startIndex + 1 : 0}-${displayedCount} of ${filtered.length} registered keys`;
+    
+    renderPagination(totalPages);
+    updateOverviewStats();
+    updateSelectAllState();
+  }
+
+  function toggleSelectAll(masterCheckbox) {
+    const checkboxes = document.querySelectorAll(".row-checkbox");
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+  }
+
+  function updateSelectAllState() {
+    const master = document.getElementById("selectAllCheckbox");
+    const checkboxes = document.querySelectorAll(".row-checkbox");
+    if (checkboxes.length === 0) {
+      if (master) master.checked = false;
+      return;
+    }
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    if (master) master.checked = allChecked;
+  }
+
+  function bulkDeleteSelected() {
+    const selectedCheckboxes = document.querySelectorAll(".row-checkbox:checked");
+    if (selectedCheckboxes.length === 0) {
+      alert("Please select at least one row to delete.");
+      return;
+    }
+
+    const pwd = confirmPasswordOnce();
+    if (!pwd) return;
+
+    if (confirm(`Are you sure you want to delete ${selectedCheckboxes.length} selected key record(s) and their history?`)) {
+      const idsToDelete = Array.from(selectedCheckboxes).map(cb => cb.getAttribute("data-id"));
+      keyRegistryData = keyRegistryData.filter(i => !idsToDelete.includes(i.id));
+      saveStoredData();
+      renderTable();
+    }
+  }
+
+  function confirmPasswordOnce() {
+    const pwd = prompt("Enter password for bulk/selected deletion:");
+    if (pwd !== null) {
+      if (pwd === "admin123" || pwd === "1234" || pwd === "password") {
+        return true;
+      } else {
+        alert("Incorrect password! Deletion denied.");
+      }
+    }
+    return false;
+  }
+
+  function downloadTemplate() {
+    const csvContent = ["Key ID,Car Reg Number,Make,Model,No. of Keys,Key Taken By,Taken Date,Reason of Withdrawal,Key Returned By,Return Date,Status\n" +
+                        "QMOL-001,AB26 XYZ,BMW,X5,2,Michael Davis,2026-09-23 10:00,Maintenance,Staff,2026-09-23 12:00,FOB- in custody"];
+    downloadFile(csvContent.join("\n"), "Car_Key_Registry_Template.csv", "text/csv");
+  }
+
+  function handleTableMakeChange(id, val) {
+    const customInput = document.getElementById(`tableMakeCustom_${id}`);
+    if (val === "OTHER") {
+      customInput.style.display = "block";
+      customInput.focus();
+    } else {
+      customInput.style.display = "none";
+      customInput.value = "";
+      updateField(id, 'make', val);
+    }
+  }
+
+  function renderPagination(totalPages) {
+    const pagContainer = document.getElementById("paginationControls");
+    pagContainer.innerHTML = "";
+
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "page-btn";
+    prevBtn.innerText = "<";
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+    pagContainer.appendChild(prevBtn);
+
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBtn = document.createElement("button");
+      pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+      pageBtn.innerText = i;
+      pageBtn.onclick = () => { currentPage = i; renderTable(); };
+      pagContainer.appendChild(pageBtn);
+    }
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "page-btn";
+    nextBtn.innerText = ">";
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+    pagContainer.appendChild(nextBtn);
+  }
+
+  function logAuditEntry(item, actionType) {
+    if (!item.history) item.history = [];
+    item.history.unshift({
+      timestamp: getCurrentFormattedDate(),
+      action: actionType,
+      status: item.status,
+      takenBy: item.takenBy || '',
+      takenDate: item.takenDate || '',
+      returnedBy: item.returnedBy || '',
+      returnDate: item.returnDate || '',
+      reason: item.reason || '',
+      actionStatus: item.actionStatus || 'active'
+    });
+  }
+
+  function editKeyId(id) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+
+    const passportInput = prompt("Security Verification: Please enter your Passport number to change the Key ID:");
+    if (passportInput !== null) {
+      if (passportInput.trim() !== "") {
+        const newIdInput = prompt("Enter new Key ID:", item.id);
+        if (newIdInput !== null && newIdInput.trim() !== "") {
+          const formattedNewId = newIdInput.trim().toUpperCase();
+          logAuditEntry(item, `Key ID changed from ${item.id} to ${formattedNewId} (Verified via Passport: ${passportInput.trim()})`);
+          item.id = formattedNewId;
+          saveStoredData();
+          renderTable();
+        }
+      } else {
+        alert("Passport number is required to change the Key ID.");
+      }
+    }
+  }
+
+  function editPlateNumber(id) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+    const newPlateInput = prompt("Edit Car Registration Number:", item.plate);
+    if (newPlateInput !== null && newPlateInput.trim() !== "") {
+      item.plate = formatPlateString(newPlateInput);
+      logAuditEntry(item, "Car Reg Updated");
+      saveStoredData();
+      renderTable();
+    }
+  }
+
+  function editTakenDate(id) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+
+    const pwd = prompt("Enter password to edit Taken Date:");
+    if (pwd !== null) {
+      if (pwd === "admin123" || pwd === "1234" || pwd === "password") {
+        const newDateInput = prompt("Enter new Taken Date (e.g. YYYY-MM-DD HH:MM):", item.takenDate || getCurrentFormattedDate());
+        if (newDateInput !== null && newDateInput.trim() !== "") {
+          const oldDate = item.takenDate;
+          item.takenDate = newDateInput.trim();
+          logAuditEntry(item, `Taken Date updated from ${oldDate} to ${item.takenDate}`);
+          saveStoredData();
+          renderTable();
+        }
+      } else {
+        alert("Incorrect password! Taken Date modification denied.");
+      }
+    }
+  }
+
+  function updateName(id, field, value) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (item && item[field] !== value) {
+      item[field] = value;
+      logAuditEntry(item, `Name Updated (${field})`);
+      saveStoredData();
+    }
+  }
+
+  function updateField(id, field, value) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (item && item[field] !== value) {
+      item[field] = value;
+      logAuditEntry(item, `Field Updated (${field})`);
+      saveStoredData();
+    }
+  }
+
+  function handleStatusSelectChange(id, selectEl) {
+    const newStatus = selectEl.value;
+    if (newStatus === 'FOB-OUT' || newStatus === 'FOB- in custody') {
+      pendingStatusKeyId = id;
+      pendingStatusNewValue = newStatus;
+      pendingStatusSelectElement = selectEl;
+      const item = keyRegistryData.find(i => i.id === id);
+      document.getElementById("statusModalNumKeys").value = item ? (item.numKeys || '1') : '1';
+      document.getElementById("statusKeyUpdateModalOverlay").style.display = "flex";
+    } else if (newStatus === 'Return') {
+      pendingReturnKeyId = id;
+      pendingReturnSelectElement = selectEl;
+      document.getElementById("returnConfirmModalOverlay").style.display = "flex";
+    } else {
+      updateStatus(id, newStatus);
+    }
+  }
+
+  function cancelStatusKeyUpdate() {
+    if (pendingStatusSelectElement) {
+      renderTable();
+    }
+    pendingStatusKeyId = null;
+    pendingStatusNewValue = null;
+    pendingStatusSelectElement = null;
+    document.getElementById("statusKeyUpdateModalOverlay").style.display = "none";
+  }
+
+  function confirmStatusKeyUpdate() {
+    const numKeysVal = document.getElementById("statusModalNumKeys").value;
+    if (pendingStatusKeyId && pendingStatusNewValue) {
+      const item = keyRegistryData.find(i => i.id === pendingStatusKeyId);
+      if (item) {
+        if (numKeysVal) {
+          item.numKeys = numKeysVal;
+        }
+        updateStatus(pendingStatusKeyId, pendingStatusNewValue);
+      }
+    }
+    pendingStatusKeyId = null;
+    pendingStatusNewValue = null;
+    pendingStatusSelectElement = null;
+    document.getElementById("statusKeyUpdateModalOverlay").style.display = "none";
+  }
+
+  function cancelReturnAction() {
+    if (pendingReturnSelectElement) {
+      renderTable();
+    }
+    pendingReturnKeyId = null;
+    pendingReturnSelectElement = null;
+    document.getElementById("returnConfirmModalOverlay").style.display = "none";
+  }
+
+  function confirmReturnAction() {
+    if (pendingReturnKeyId) {
+      const item = keyRegistryData.find(i => i.id === pendingReturnKeyId);
+      if (item) {
+        const now = getCurrentFormattedDate();
+        logAuditEntry(item, "Status changed to Return");
+        item.status = 'Return';
+        item.returnDate = now;
+        item.actionStatus = 'inactive';
+        saveStoredData();
+      }
+    }
+    pendingReturnKeyId = null;
+    pendingReturnSelectElement = null;
+    document.getElementById("returnConfirmModalOverlay").style.display = "none";
+    renderTable();
+  }
+
+  function promptChangeActionStatus(id) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+
+    const pwd = prompt("Enter password to change action status:");
+    if (pwd !== null) {
+      if (pwd === "admin123" || pwd === "1234" || pwd === "password") {
+        if (item.actionStatus === 'inactive') {
+          item.actionStatus = 'active';
+          logAuditEntry(item, "Action Status changed to Active");
+        } else {
+          item.actionStatus = 'inactive';
+          logAuditEntry(item, "Action Status changed to Inactive");
+        }
+        saveStoredData();
+        renderTable();
+      } else {
+        alert("Incorrect password! Changes denied.");
+      }
+    }
+  }
+
+  function updateStatus(id, newStatus) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+
+    const now = getCurrentFormattedDate();
+    logAuditEntry(item, `Status changed to ${newStatus}`);
+    item.status = newStatus;
+
+    if (newStatus === 'FOB-OUT') {
+      item.takenDate = now;
+      item.returnedBy = "--";
+      item.returnDate = "--";
+      item.reason = ""; 
+    } else if (newStatus === 'FOB- in custody') {
+      if (item.returnedBy === "--" || !item.returnedBy) item.returnedBy = "Staff";
+      item.returnDate = now;
+    }
+
+    saveStoredData();
+    renderTable();
+  }
+
+  function viewHistory(id) {
+    const item = keyRegistryData.find(i => i.id === id);
+    if (!item) return;
+
+    document.getElementById("historyTitle").innerText = `Audit Trail: ${item.plate || ''} (${item.id || ''})`;
+    const listContainer = document.getElementById("historyList");
+    listContainer.innerHTML = "";
+
+    if (!item.history || item.history.length === 0) {
+      listContainer.innerHTML = `<div class="history-item">No past history recorded for this key yet.</div>`;
+    } else {
+      item.history.forEach(log => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <div class="history-item-header">
+            <span>${log.action}</span>
+            <span style="font-weight: normal; font-size: 10px;">${log.timestamp}</span>
+          </div>
+          <div class="history-item-sub">
+            Status: <strong>${log.status}</strong> | Action State: <strong>${log.actionStatus || 'active'}</strong> | Taken By: <strong>${log.takenBy || '--'}</strong> (${log.takenDate || '--'}) | Reason: <strong>${log.reason || '--'}</strong> | Returned By: <strong>${log.returnedBy || '--'}</strong> (${log.returnDate || '--'})
+          </div>
+        `;
+        listContainer.appendChild(div);
+      });
+    }
+
+    document.getElementById("historyModalOverlay").style.display = "flex";
+  }
+
+  function closeHistoryModal() {
+    document.getElementById("historyModalOverlay").style.display = "none";
+  }
+
+  function updateOverviewStats() {
+    const total = keyRegistryData.length;
+    const countOut = keyRegistryData.filter(i => i.status === 'FOB-OUT').length;
+    const countCustody = keyRegistryData.filter(i => i.status === 'FOB- in custody').length;
+    const countUnknown = keyRegistryData.filter(i => i.status === 'Unknown Key').length;
+    const countReturn = keyRegistryData.filter(i => i.status === 'Return').length;
+
+    document.getElementById("statTotal").innerText = total;
+    document.getElementById("statOut").innerText = countOut;
+    document.getElementById("statCustody").innerText = countCustody;
+    document.getElementById("statUnknown").innerText = countUnknown;
+    document.getElementById("statReturn").innerText = countReturn;
+
+    document.getElementById("pctOut").innerText = total > 0 ? `${Math.round((countOut / total) * 100)}%` : '0%';
+    document.getElementById("pctCustody").innerText = total > 0 ? `${Math.round((countCustody / total) * 100)}%` : '0%';
+    document.getElementById("pctUnknown").innerText = total > 0 ? `${Math.round((countUnknown / total) * 100)}%` : '0%';
+    document.getElementById("pctReturn").innerText = total > 0 ? `${Math.round((countReturn / total) * 100)}%` : '0%';
+  }
+
+  function resetFilters() { document.getElementById("regSearch").value = ""; currentPage = 1; renderTable(); }
+  
+  function deleteKey(id) { 
+    const pwd = prompt("Enter password to delete this row:");
+    if (pwd !== null) {
+      if (pwd === "admin123" || pwd === "1234" || pwd === "password") {
+        if (confirm("Are you sure you want to delete this key record and its history?")) {
+          keyRegistryData = keyRegistryData.filter(i => i.id !== id); 
+          saveStoredData();
+          renderTable(); 
+        }
+      } else {
+        alert("Incorrect password! Deletion denied.");
+      }
+    }
+  }
+  
+  function openModal() { document.getElementById("modalOverlay").style.display = "flex"; }
+  function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
+
+  function saveNewKey() {
+    const rawPlate = document.getElementById("modalPlate").value || "AB26 XYZ";
+    let makeSelectVal = document.getElementById("modalMakeSelect").value;
+    let make = makeSelectVal === "OTHER" ? (document.getElementById("modalMakeCustom").value || "").toUpperCase() : makeSelectVal;
+    
+    const model = (document.getElementById("modalModel").value || "").toUpperCase();
+    const numKeys = document.getElementById("modalNumKeys").value || "1";
+    const takenBy = document.getElementById("modalTakenBy").value || "";
+    const reason = document.getElementById("modalReason").value || "";
+    const status = document.getElementById("modalStatus").value;
+    const now = getCurrentFormattedDate();
+
+    const newKey = {
+      id: generateQMOLId(),
+      plate: formatPlateString(rawPlate),
+      make: make,
+      model: model,
+      numKeys: numKeys,
+      takenBy: takenBy,
+      takenDate: status === 'FOB-OUT' ? now : '--',
+      reason: reason,
+      returnedBy: status === 'FOB- in custody' ? 'Staff' : (status === 'Return' ? 'Staff' : '--'),
+      returnDate: status === 'FOB- in custody' || status === 'Return' ? now : '--',
+      status: status,
+      actionStatus: status === 'Return' ? 'inactive' : 'active',
+      history: []
+    };
+
+    logAuditEntry(newKey, "Key Initially Registered");
+    keyRegistryData.push(newKey);
+
+    saveStoredData();
+    closeModal();
+    document.getElementById("modalPlate").value = "";
+    document.getElementById("modalMakeSelect").value = "BMW";
+    document.getElementById("modalMakeCustom").style.display = "none";
+    document.getElementById("modalMakeCustom").value = "";
+    document.getElementById("modalModel").value = "";
+    document.getElementById("modalNumKeys").value = "1";
+    document.getElementById("modalTakenBy").value = "";
+    document.getElementById("modalReason").value = "";
+    currentPage = 1;
+    renderTable();
+  }
+
+  function importExcelFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        if (file.name.endsWith('.json')) {
+          const content = JSON.parse(evt.target.result);
+          if (content.registry) {
+            keyRegistryData = content.registry;
+            nextKeyNumber = content.nextNum || nextKeyNumber;
+            saveStoredData();
+            renderTable();
+            alert("Successfully imported shared backup JSON data!");
+            e.target.value = "";
+            return;
+          }
+        }
+
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+        if (json.length === 0) {
+          alert("The uploaded file contains no data.");
+          return;
+        }
+
+        json.forEach(row => {
+          let keyId = row["Key ID"] || row["KeyID"] || row["key_id"] || "";
+          let plate = row["Car Reg Number"] || row["Plate"] || row["Registration"] || "";
+          let make = (row["Make"] || "BMW").toUpperCase();
+          let model = (row["Model"] || "").toUpperCase();
+          let numKeys = row["No. of Keys"] || row["No of Keys"] || row["Keys"] || "1";
+          let takenBy = row["Key Taken By"] || row["Taken By"] || "";
+          let takenDate = row["Taken Date"] || "";
+          let reason = row["Reason of Withdrawal"] || row["Reason"] || "";
+          let returnedBy = row["Key Returned By"] || row["Returned By"] || "";
+          let returnDate = row["Return Date"] || "";
+          let status = row["Status"] || "FOB- in custody";
+          let actionStatus = status === 'Return' ? 'inactive' : 'active';
+
+          if (!keyId.trim()) {
+            keyId = generateQMOLId();
+          }
+
+          const newRecord = {
+            id: String(keyId).trim(),
+            plate: formatPlateString(String(plate)),
+            make: String(make).trim(),
+            model: String(model).trim(),
+            numKeys: String(numKeys).trim() || "1",
+            takenBy: String(takenBy).trim(),
+            takenDate: String(takenDate).trim(),
+            reason: String(reason).trim(),
+            returnedBy: String(returnedBy).trim(),
+            returnDate: String(returnDate).trim(),
+            status: String(status).trim() || 'FOB- in custody',
+            actionStatus: actionStatus,
+            history: []
+          };
+
+          logAuditEntry(newRecord, "Imported from File");
+          keyRegistryData.push(newRecord);
+        });
+
+        saveStoredData();
+        renderTable();
+        alert(`Successfully imported ${json.length} record(s).`);
+      } catch (err) {
+        alert("Error importing file.");
+      }
+      e.target.value = "";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function exportToCSV() {
+    let csv = ["SI No.,Key ID,Car Reg Number,Make,Model,No. of Keys,Key Taken By,Taken Date,Reason of Withdrawal,Key Returned By,Return Date,Status,Action Status"];
+    keyRegistryData.forEach((item, index) => {
+      csv.push(`"${index + 1}","${item.id || ''}","${item.plate || ''}","${item.make || ''}","${item.model || ''}","${item.numKeys || '1'}","${item.takenBy || ''}","${item.takenDate || ''}","${item.reason || ''}","${item.returnedBy || ''}","${item.returnDate || ''}","${item.status || ''}","${item.actionStatus || 'active'}"`);
+    });
+    downloadFile(csv.join("\n"), "Car_Key_Registry.csv", "text/csv");
+  }
+
+  function exportToExcel(filename = null) {
+    let excel = ["SI No.\tKey ID\tCar Reg Number\tMake\tModel\tNo. of Keys\tKey Taken By\tTaken Date\tReason of Withdrawal\tKey Returned By\tReturn Date\tStatus\tAction Status"];
+    keyRegistryData.forEach((item, index) => {
+      excel.push(`${index + 1}\t${item.id || ''}\t${item.plate || ''}\t${item.make || ''}\t${item.model || ''}\t${item.numKeys || '1'}\t${item.takenBy || ''}\t${item.takenDate || ''}\t${item.reason || ''}\t${item.returnedBy || ''}\t${item.returnDate || ''}\t${item.status || ''}\t${item.actionStatus || 'active'}`);
+    });
+    const saveName = filename || "Car_Key_Registry.xls";
+    downloadFile(excel.join("\n"), saveName, "application/vnd.ms-excel");
+  }
+
+  function downloadFile(content, fileName, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+  }
+
+  function exportToPDF() {
+    const tableBody = [
+      [
+        { text: 'SI No.', style: 'tableHeader' },
+        { text: 'Key ID', style: 'tableHeader' },
+        { text: 'Car Reg Number', style: 'tableHeader' },
+        { text: 'Make', style: 'tableHeader' },
+        { text: 'Model', style: 'tableHeader' },
+        { text: 'Keys', style: 'tableHeader' },
+        { text: 'Key Taken By', style: 'tableHeader' },
+        { text: 'Taken Date', style: 'tableHeader' },
+        { text: 'Reason', style: 'tableHeader' },
+        { text: 'Key Returned By', style: 'tableHeader' },
+        { text: 'Return Date', style: 'tableHeader' },
+        { text: 'Status', style: 'tableHeader' },
+        { text: 'Action', style: 'tableHeader' }
+      ]
+    ];
+
+    keyRegistryData.forEach((item, index) => {
+      let statusColor = '#000000';
+      let statusBg = '#ffffff';
+
+      if (item.status === 'FOB-OUT') {
+        statusColor = '#854d0e';
+        statusBg = '#fef08a';
+      } else if (item.status === 'FOB- in custody') {
+        statusColor = '#166534';
+        statusBg = '#dcfce7';
+      } else if (item.status === 'Return') {
+        statusColor = '#475569';
+        statusBg = '#e2e8f0';
+      } else {
+        statusColor = '#991b1b';
+        statusBg = '#fee2e2';
+      }
+
+      tableBody.push([
+        { text: (index + 1).toString(), alignment: 'center' },
+        { text: item.id || '', bold: true },
+        { text: item.plate || '', bold: true, color: '#2563eb' },
+        { text: item.make || '' },
+        { text: item.model || '' },
+        { text: item.numKeys || '1', alignment: 'center' },
+        { text: item.takenBy || '' },
+        { text: item.takenDate || '' },
+        { text: item.reason || '' },
+        { text: item.returnedBy || '' },
+        { text: item.returnDate || '' },
+        { text: item.status || '', fillColor: statusBg, color: statusColor, bold: true, alignment: 'center' },
+        { text: item.actionStatus || 'active', bold: true, alignment: 'center' }
+      ]);
+    });
+
+    const docDefinition = {
+      pageSize: 'A4',
+      pageOrientation: 'landscape',
+      pageMargins: [15, 15, 15, 15],
+      content: [
+        { text: 'Embassy of the State of Qatar - Medical Office-London', style: 'header' },
+        { text: 'Car Key Registration Report', style: 'subheader' },
+        { text: `Generated on: ${new Date().toLocaleString()}`, style: 'metaDate' },
+        {
+          style: 'tableExample',
+          table: {
+            headerRows: 1,
+            widths: [22, 45, 60, 45, 45, 25, 70, 60, 65, 70, 60, 55, 45],
+            body: tableBody
+          },
+          layout: {
+            fillColor: function (rowIndex) { return (rowIndex === 0) ? '#f8fafc' : null; },
+            hLineWidth: function () { return 0.5; },
+            vLineWidth: function () { return 0.5; },
+            hLineColor: function () { return '#cbd5e1'; },
+            vLineColor: function () { return '#cbd5e1'; }
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 16, bold: true, color: '#8A1538', margin: [0, 0, 0, 2] },
+        subheader: { fontSize: 12, bold: true, color: '#0f172a', margin: [0, 0, 0, 4] },
+        metaDate: { fontSize: 9, color: '#64748b', margin: [0, 0, 0, 12] },
+        tableHeader: { bold: true, fontSize: 8, color: '#0f172a' }
+      },
+      defaultStyle: { fontSize: 7.5 }
+    };
+
+    pdfMake.createPdf(docDefinition).download('Car_Key_Registry_Report.pdf');
+  }
+
+  loadStoredData();
+  startNetworkPollingSync();
+</script>
+
+</body>
+</html>
